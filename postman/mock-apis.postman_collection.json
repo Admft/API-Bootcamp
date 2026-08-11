@@ -1,0 +1,124 @@
+{
+  "info": {
+    "name": "One-Day API Lab — Mock APIs",
+    "description": "Import this collection to practice API calls against local mock servers.\n\nStart servers first: python mock-apis/run_servers.py",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "source_url", "value": "http://127.0.0.1:5001"},
+    {"key": "dest_url", "value": "http://127.0.0.1:5002"},
+    {"key": "source_key", "value": "dev-source-key-12345"},
+    {"key": "dest_key", "value": "dev-dest-key-67890"}
+  ],
+  "item": [
+    {
+      "name": "1. Health — Source",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{source_url}}/health"
+      }
+    },
+    {
+      "name": "2. List Open Incidents",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{source_key}}"}
+        ],
+        "url": {
+          "raw": "{{source_url}}/v1/incidents?status=open",
+          "host": ["{{source_url}}"],
+          "path": ["v1", "incidents"],
+          "query": [{"key": "status", "value": "open"}]
+        }
+      }
+    },
+    {
+      "name": "3. Filter Critical Incidents",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{source_key}}"}
+        ],
+        "url": {
+          "raw": "{{source_url}}/v1/incidents?status=open&severity=critical",
+          "host": ["{{source_url}}"],
+          "path": ["v1", "incidents"],
+          "query": [
+            {"key": "status", "value": "open"},
+            {"key": "severity", "value": "critical"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Get Single Incident",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{source_key}}"}
+        ],
+        "url": "{{source_url}}/v1/incidents/INC-38192"
+      }
+    },
+    {
+      "name": "5. Paginated Incidents (limit=3)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{source_key}}"}
+        ],
+        "url": {
+          "raw": "{{source_url}}/v1/incidents?page=1&limit=3",
+          "host": ["{{source_url}}"],
+          "path": ["v1", "incidents"],
+          "query": [
+            {"key": "page", "value": "1"},
+            {"key": "limit", "value": "3"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Create Ticket",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{dest_key}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"external_id\": \"INC-38192\",\n  \"site\": \"Water Treatment Plant 4\",\n  \"description\": \"Pump pressure below threshold\",\n  \"priority\": 1\n}"
+        },
+        "url": "{{dest_url}}/v1/tickets"
+      }
+    },
+    {
+      "name": "7. Duplicate Ticket (expect 409)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{dest_key}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"external_id\": \"INC-38192\",\n  \"site\": \"Water Treatment Plant 4\",\n  \"description\": \"Pump pressure below threshold\",\n  \"priority\": 1\n}"
+        },
+        "url": "{{dest_url}}/v1/tickets"
+      }
+    },
+    {
+      "name": "8. List All Tickets",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{dest_key}}"}
+        ],
+        "url": "{{dest_url}}/v1/tickets"
+      }
+    }
+  ]
+}

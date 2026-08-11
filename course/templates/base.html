@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}API Integration Bootcamp{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/course.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">{ }</div>
+        <div>
+          <strong>API Bootcamp</strong>
+          <span>One-day intensive</span>
+        </div>
+      </div>
+
+      <div class="progress-block">
+        <div class="progress-label">
+          <span>Course progress</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+
+      <div class="api-status" id="api-status">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking mock APIs…</span>
+      </div>
+
+      <nav class="course-nav">
+        {% for module in modules %}
+        <div class="nav-module">
+          <div class="nav-module-title">{{ module.title }}</div>
+          {% for les in module.lessons %}
+          <a href="{{ url_for('lesson_page', lesson_id=les.id) }}"
+             class="nav-lesson {% if lesson is defined and lesson.id == les.id %}active{% endif %}"
+             data-lesson-id="{{ les.id }}">
+            <span class="lesson-check" data-check="{{ les.id }}"></span>
+            {{ les.title }}
+          </a>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script>
+    window.COURSE_TOTAL = {{ total_lessons | default(0) }};
+  </script>
+  <script src="{{ url_for('static', filename='js/course.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

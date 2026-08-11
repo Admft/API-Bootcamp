@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — API Integration Bootcamp{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">One-day intensive course</p>
+    <h1>API Integration Bootcamp</h1>
+    <p class="lead">Read API docs → authenticate → call endpoints → transform JSON → sync systems → document it. Built for Sales Engineers who learn by typing.</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-secondary" id="btn-check-apis">Check APIs</button>
+    <a href="{{ url_for('lesson_page', lesson_id='intro') }}" class="btn btn-primary">Start course →</a>
+  </div>
+</header>
+
+<section class="stats-row">
+  <div class="stat-card">
+    <span class="stat-value">{{ total_lessons }}</span>
+    <span class="stat-label">Lessons</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">~8h</span>
+    <span class="stat-label">Total time</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">6</span>
+    <span class="stat-label">Scripts you build</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value" id="dash-progress">0%</span>
+    <span class="stat-label">Your progress</span>
+  </div>
+</section>
+
+<section class="modules-grid">
+  {% for module in modules %}
+  <article class="module-card">
+    <div class="module-card-header">
+      <span class="module-num">{{ loop.index }}</span>
+      <div>
+        <h2>{{ module.title }}</h2>
+        <p>{{ module.subtitle }}</p>
+      </div>
+    </div>
+    <ul class="module-lessons">
+      {% for les in module.lessons %}
+      <li>
+        <a href="{{ url_for('lesson_page', lesson_id=les.id) }}" data-lesson-id="{{ les.id }}">
+          <span class="lesson-check-inline" data-check="{{ les.id }}"></span>
+          <span>{{ les.title }}</span>
+          <span class="lesson-duration">{{ les.duration }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% set first = module.lessons[0] %}
+    <a href="{{ url_for('lesson_page', lesson_id=first.id) }}" class="module-start">Start module →</a>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="callout">
+  <h3>How this course works</h3>
+  <div class="callout-grid">
+    <div>
+      <strong>1. Read the step</strong>
+      <p>Each lesson breaks work into small type-along chunks with checkpoints.</p>
+    </div>
+    <div>
+      <strong>2. Type in the editor</strong>
+      <p>Build real scripts in the built-in workspace — muscle memory matters.</p>
+    </div>
+    <div>
+      <strong>3. Run & verify</strong>
+      <p>Execute your script and hit Verify to confirm you nailed it.</p>
+    </div>
+    <div>
+      <strong>4. Final exam</strong>
+      <p>Rebuild the whole integration from a blank file without guides.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

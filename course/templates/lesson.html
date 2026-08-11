@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}{{ lesson.title }} — API Integration Bootcamp{% endblock %}
+
+{% block content %}
+<header class="lesson-header">
+  <div class="lesson-meta">
+    <span class="eyebrow">{{ lesson.module_title }}</span>
+    <h1>{{ lesson.title }}</h1>
+    <p>{{ lesson.description }}</p>
+    <span class="badge">{{ lesson.duration }}</span>
+    <span class="badge badge-type">{{ lesson.type | replace('_', ' ') }}</span>
+  </div>
+  <div class="lesson-nav-buttons">
+    {% if prev_lesson %}
+    <a href="{{ url_for('lesson_page', lesson_id=prev_lesson.id) }}" class="btn btn-secondary">← Previous</a>
+    {% endif %}
+    <button class="btn btn-success" id="btn-complete" data-lesson-id="{{ lesson.id }}">Mark complete</button>
+    {% if next_lesson %}
+    <a href="{{ url_for('lesson_page', lesson_id=next_lesson.id) }}" class="btn btn-primary" id="btn-next">Next →</a>
+    {% endif %}
+  </div>
+</header>
+
+{% if lesson.type == 'content' and lesson.id == 'intro' %}
+<section class="lesson-body content-only">
+  <div class="prose">
+    <h2>What you'll be able to do today</h2>
+    <ul>
+      <li>Read OpenAPI / REST documentation and turn it into working Python</li>
+      <li>Authenticate with Bearer tokens and environment variables</li>
+      <li>GET data from one system, transform JSON, POST to another</li>
+      <li>Handle pagination, errors, duplicates, and timeouts</li>
+      <li>Document integrations for fellow Sales Engineers</li>
+    </ul>
+
+    <h2>The one pattern that matters</h2>
+    <pre><code>GET source API → filter → transform schema → POST destination API</code></pre>
+
+    <h2>Course modules</h2>
+    <p>You'll type six real scripts against local mock APIs — no paid accounts needed. Each lesson has a built-in editor, run button, and verifier.</p>
+
+    <h2>Rules</h2>
+    <ul>
+      <li><strong>Type it</strong> — build each script step by step in the editor</li>
+      <li><strong>Analyze</strong> — hit ✦ Analyze (or Ctrl+Enter) after each step to check your work</li>
+      <li><strong>Fix until green</strong> — each step shows ✓ or ✗ with hints</li>
+    </ul>
+
+    <a href="{{ url_for('lesson_page', lesson_id='setup') }}" class="btn btn-primary">Next: Environment Setup →</a>
+  </div>
+</section>
+
+{% elif lesson.type == 'setup' %}
+<section class="lesson-body content-only">
+  <div class="prose">
+    <h2>Terminal 1 — Mock APIs (keep running all day)</h2>
+    <pre><code>cd "c:\Users\amoffat\Documents\Documents\Projects\Learn Python"
+.\venv\Scripts\Activate.ps1
+python mock-apis\run_servers.py</code></pre>
+
+    <h2>Terminal 2 — Already done if you ran setup</h2>
+    <pre><code>.\setup.ps1
+.\venv\Scripts\Activate.ps1
+python course\app.py</code></pre>
+
+    <p>The green dot in the sidebar means both mock APIs are online. If it's red, start Terminal 1.</p>
+
+    <h2>Your workspace</h2>
+    <p>Scripts you type are saved to <code>exercises/my-work/</code> on disk — you can also edit them in VS Code.</p>
+
+    <div class="setup-checklist">
+      <label><input type="checkbox" class="setup-item"> Virtual env created</label>
+      <label><input type="checkbox" class="setup-item"> Mock APIs running (check sidebar status)</label>
+      <label><input type="checkbox" class="setup-item"> .env file exists with API keys</label>
+    </div>
+
+    <a href="{{ url_for('lesson_page', lesson_id='http-basics') }}" class="btn btn-primary">Next: HTTP Basics →</a>
+  </div>
+</section>
+
+{% elif lesson.type == 'lab' and lesson.id == 'postman-lab' %}
+<section class="lesson-body content-only">
+  <div class="prose">
+    <h2>Postman Lab</h2>
+    <ol>
+      <li>Download <a href="https://www.postman.com/downloads/" target="_blank">Postman</a></li>
+      <li>Import <code>postman/mock-apis.postman_collection.json</code></li>
+      <li>Ensure mock APIs are running (sidebar green dot)</li>
+      <li>Work through all 8 requests in order</li>
+    </ol>
+
+    <h2>What to notice</h2>
+    <table>
+      <tr><th>Request</th><th>Learn</th></tr>
+      <tr><td>Health check</td><td>No auth needed</td></tr>
+      <tr><td>List incidents</td><td>Bearer token in Authorization</td></tr>
+      <tr><td>Filter critical</td><td>Query parameters</td></tr>
+      <tr><td>Create ticket</td><td>POST with JSON body</td></tr>
+      <tr><td>Duplicate ticket</td><td>409 Conflict response</td></tr>
+    </table>
+
+    <p>After Postman works, recreate request #2 in Python (next modules).</p>
+    <a href="{{ url_for('lesson_page', lesson_id='python-syntax') }}" class="btn btn-primary">Next: Python Syntax →</a>
+  </div>
+</section>
+
+{% elif lesson.type == 'reference' %}
+<section class="lesson-body split-view">
+  <div class="lesson-panel prose" id="reference-panel">
+    <h2>Reference Implementation</h2>
+    <p>Compare your capstone with the production-style reference. Don't copy — understand differences.</p>
+    <div class="ref-tabs">
+      <button class="ref-tab active" data-ref="capstone/sync_incidents.py">sync_incidents.py</button>
+      <button class="ref-tab" data-ref="capstone/README.md">README.md</button>
+    </div>
+    <pre class="ref-code" id="ref-content"><code>Loading…</code></pre>
+  </div>
+</section>
+
+{% elif lesson.type == 'exam' %}
+<section class="lesson-body content-only">
+  <div class="prose">
+    <h2>Final Self-Test</h2>
+    <p>Close the guides. Open a blank file. Can you do all 10 in under 45 minutes?</p>
+    <ol>
+      <li>Find authentication docs</li>
+      <li>GET request in Postman</li>
+      <li>Same request in Python</li>
+      <li>Extract fields from JSON</li>
+      <li>Filter results</li>
+      <li>Transform to another dictionary</li>
+      <li>POST that dictionary</li>
+      <li>Handle a failed request</li>
+      <li>Use environment variables for secrets</li>
+      <li>Write a README for another SE</li>
+    </ol>
+    <p>Use the editor below to build <code>self_test.py</code> from scratch.</p>
+  </div>
+  {% set workspace_file = 'self_test.py' %}
+  {% include 'partials/workspace.html' %}
+</section>
+
+{% elif lesson.type == 'type_along' %}
+<section class="lesson-body interactive-layout">
+  <div class="lesson-panel steps-panel" id="steps-panel">
+    <div class="steps-panel-header">
+      <h2>Choose an exercise</h2>
+      <p>Same skill, different scenario. Complete A → B → C for full practice.</p>
+    </div>
+    <div class="exercise-picker" id="exercise-picker"></div>
+    <div class="exercise-scenario" id="exercise-scenario"></div>
+    <div class="steps-list" id="steps-list">
+      <p class="steps-loading">Loading steps…</p>
+    </div>
+    {% if guide_html %}
+    <details class="guide-fallback">
+      <summary>Full written guide (backup)</summary>
+      <div class="prose guide-content">{{ guide_html | safe }}</div>
+    </details>
+    {% endif %}
+  </div>
+  {% include 'partials/workspace.html' %}
+</section>
+
+{% else %}
+<section class="lesson-body {% if content_html %}content-only{% endif %}">
+  <div class="prose">
+    {% if content_html %}{{ content_html | safe }}{% else %}<p>Content not found.</p>{% endif %}
+  </div>
+  {% if next_lesson %}
+  <a href="{{ url_for('lesson_page', lesson_id=next_lesson.id) }}" class="btn btn-primary lesson-continue">Continue →</a>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if lesson.type == 'reference' %}
+<script>
+  document.querySelectorAll('.ref-tab').forEach(tab => {
+    tab.addEventListener('click', async () => {
+      document.querySelectorAll('.ref-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const res = await fetch('/api/reference/' + tab.dataset.ref);
+      const data = await res.json();
+      document.getElementById('ref-content').textContent = data.content;
+    });
+  });
+  document.querySelector('.ref-tab')?.click();
+</script>
+{% endif %}
+{% if workspace_file is defined and workspace_file %}
+<script>
+  window.WORKSPACE_FILE = {{ workspace_file | tojson }};
+  window.LESSON_ID = {{ lesson.id | tojson }};
+  window.HAS_VERIFIER = {{ (lesson.verify_script is not none) | tojson }};
+  window.HAS_INTERACTIVE = {{ (has_interactive_steps | default(false)) | tojson }};
+</script>
+{% endif %}
+{% endblock %}

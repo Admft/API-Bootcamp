@@ -1,0 +1,181 @@
+# One-Day API Integration Bootcamp
+
+**Goal:** Read API docs → authenticate → call endpoints → transform JSON → sync systems → document it.
+
+---
+
+## Start the course (recommended)
+
+```powershell
+cd "c:\Users\amoffat\Documents\Documents\Projects\Learn Python"
+.\setup.ps1
+.\venv\Scripts\Activate.ps1
+
+# Terminal 1 — mock APIs
+python mock-apis\run_servers.py
+
+# Terminal 2 — course platform
+python course\app.py
+```
+
+Open **http://127.0.0.1:8080** — interactive lessons, built-in code editor, progress tracking, and verify buttons.
+
+---
+
+## Today's Schedule
+
+| Time | Block | File(s) | Outcome |
+|------|-------|---------|---------|
+| **8:00–9:00** | HTTP + APIs | `guides/01_http_type_along.md` — **type** answers + first script | Methods, status codes, first GET |
+| **9:00–10:00** | Postman | `postman/README.md`, import collection | Manual API calls, inspect responses |
+| **10:00–11:00** | Python basics | `guides/02_python_type_along.md` → `my-work/02_basics.py` | Dicts, loops, transform |
+| **11:00–12:00** | Script #1 | `guides/03_get_filter_type_along.md` → `my-work/03_get_incidents.py` | Retrieve + filter |
+| **12:00–1:30** | Script #2 | `guides/04_sync_type_along.md` → `my-work/04_sync.py` | System A → B |
+| **1:30–2:30** | Reliability | `guides/05_reliability_type_along.md` → `my-work/05_reliability.py` | Pagination, errors |
+| **2:30–3:30** | Bash/JS recognition | `cheatsheets/http-api-basics.md` (bottom section) | Same HTTP, different syntax |
+| **3:30–6:00** | Capstone | `guides/06_capstone_type_along.md` → `my-work/06_sync_incidents.py` | Full integration you typed |
+| **6:00–7:00** | Document | `capstone/README.md`, `templates/` | SE-ready documentation |
+| **7:00+** | Self-test | `SELF_TEST.md` | Rebuild from blank screen |
+
+**Rule:** ~3 hours learning, rest **building**. Type every line yourself — run after each step.
+
+**Start here:** `exercises/START_HERE.md`
+
+---
+
+## Project Structure
+
+```
+Learn Python/
+├── README.md                 ← You are here (schedule + strategy)
+├── SELF_TEST.md              ← Final exam — do this tonight
+├── setup.ps1                 ← One-command setup
+├── requirements.txt
+├── .env.example              ← Copy to .env
+│
+├── cheatsheets/              ← Keep open while coding
+│   ├── http-api-basics.md
+│   ├── python-api-syntax.md
+│   └── vocabulary.md
+│
+├── mock-apis/                ← Local source + destination APIs
+│   ├── run_servers.py        ← Start both servers
+│   ├── source_api.py         ← Monitoring/incidents (port 5001)
+│   └── destination_api.py    ← Ticketing (port 5002)
+│
+├── course/                   ← Web course platform (python course/app.py)
+│   ├── app.py
+│   ├── templates/
+│   └── static/
+│
+├── exercises/
+│   ├── guides/               ← Type-along content (shown in course UI)
+│   ├── my-work/              ← Your scripts (editor saves here)
+│   └── verify/               ← Lesson checkers
+│
+├── solutions/                ← Peek only when stuck
+│   └── exercises/
+│
+├── capstone/                 ← Production-style integration
+│   ├── sync_incidents.py
+│   └── README.md
+│
+├── postman/                  ← Import into Postman app
+│   └── mock-apis.postman_collection.json
+│
+└── templates/
+    └── integration-readme-template.md
+```
+
+---
+
+## Priority Pyramid
+
+If you're running out of time, study in this order — **don't reverse it:**
+
+```
+                    nice
+                 ┌────────┐
+                 │ Bash/JS│
+              ┌──┴────────┴──┐
+              │ Logging/retry │
+           ┌──┴───────────────┴──┐
+           │ Pagination + errors  │
+        ┌──┴──────────────────────┴──┐
+        │ Python requests + JSON      │
+     ┌──┴─────────────────────────────┴──┐
+     │ HTTP + API docs + authentication   │
+     └────────────────────────────────────┘
+                  MUST KNOW
+```
+
+---
+
+## The Core Pattern (memorize this)
+
+```python
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# 1. Auth from environment
+API_KEY = os.getenv("SOURCE_API_KEY")
+
+# 2. GET from source
+response = requests.get(
+    url,
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    params={"status": "open"},
+    timeout=30,
+)
+response.raise_for_status()
+incidents = response.json()["data"]
+
+# 3. Filter + transform
+for incident in incidents:
+    if incident["severity"] not in {"critical", "high"}:
+        continue
+
+    ticket = {
+        "external_id": incident["id"],
+        "site": incident["facility"],
+        "description": incident["message"],
+        "priority": 1 if incident["severity"] == "critical" else 2,
+    }
+
+    # 4. POST to destination
+    result = requests.post(
+        dest_url,
+        headers={"Authorization": f"Bearer {os.getenv('DESTINATION_API_KEY')}"},
+        json=ticket,
+        timeout=30,
+    )
+    result.raise_for_status()
+```
+
+That's the job: **GET → filter → transform → POST → handle errors → document.**
+
+---
+
+## When You're Stuck
+
+1. Check `cheatsheets/` for syntax
+2. Test the request in Postman first
+3. Look at `solutions/exercises/` for that exercise only
+4. Read the mock API docs: `mock-apis/README.md`
+
+---
+
+## Your Pitch (after today)
+
+> "I built a lightweight integration that retrieves operational incidents from a monitoring API, filters critical events, maps the source schema into the destination ticketing schema, and creates actionable work orders. Authentication is handled through environment variables, requests have error handling and timeouts, and the implementation is documented for other Sales Engineers."
+
+---
+
+## Tonight's Final Test
+
+Open `SELF_TEST.md`. Rebuild the integration from scratch without looking at solutions.
+
+If you pass all 10 tasks, you're demo-ready.

@@ -1,0 +1,47 @@
+<div class="lesson-panel workspace-panel interactive-workspace">
+  {% if has_interactive_steps %}
+  <div class="steps-header">
+    <div class="steps-progress-text">
+      <span id="steps-counter">Step 1 of ?</span>
+      <span class="steps-passed-count" id="steps-passed-label"></span>
+    </div>
+    <div class="steps-dots" id="steps-dots"></div>
+  </div>
+  {% endif %}
+
+  <div class="workspace-toolbar">
+    <div class="workspace-file">
+      <span class="file-icon">PY</span>
+      <span id="workspace-filename">{{ workspace_file }}</span>
+      <span class="save-indicator" id="save-indicator">Saved</span>
+    </div>
+    <div class="workspace-actions">
+      {% if has_interactive_steps %}
+      <button class="btn btn-sm btn-analyze" id="btn-analyze" title="Ctrl+Enter">✦ Analyze</button>
+      {% endif %}
+      <button class="btn btn-sm btn-secondary" id="btn-save">Save</button>
+      <button class="btn btn-sm btn-secondary" id="btn-run">▶ Run</button>
+      {% if lesson.verify_script or has_interactive_steps %}
+      <button class="btn btn-sm btn-primary" id="btn-verify" style="display:none">Verify all</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <textarea id="code-editor" class="code-editor" spellcheck="false" placeholder="# Type your code here — hit Analyze (Ctrl+Enter) after each step…">{{ workspace_content }}</textarea>
+
+  <div class="analyze-panel" id="analyze-panel">
+    <div class="analyze-summary" id="analyze-summary">
+      <span class="analyze-icon">✦</span>
+      <span id="analyze-summary-text">Type code above, then click <strong>Analyze</strong> to check your work.</span>
+    </div>
+    <div class="analyze-checks" id="analyze-checks"></div>
+  </div>
+
+  <div class="terminal" id="terminal">
+    <div class="terminal-header">
+      <span>Run output</span>
+      <button class="btn-clear" id="btn-clear-terminal">Clear</button>
+    </div>
+    <pre class="terminal-body" id="terminal-body"><span class="terminal-muted">Use ▶ Run to execute your script.</span></pre>
+  </div>
+</div>
