@@ -735,9 +735,8 @@
     }
 
     // Programmatic edits to textarea.value don't fire "input", so mutate the
-    // editor and then schedule a save/undo checkpoint ourselves.
+    // editor and then schedule a save ourselves.
     function replaceRange(from, to, text, caretOffset) {
-      const value = editor.value;
       editor.setRangeText(text, from, to, "end");
       if (typeof caretOffset === "number") {
         editor.selectionStart = editor.selectionEnd = from + caretOffset;
@@ -752,36 +751,99 @@
       return { indent: match ? match[0] : "", lineStart, line };
     }
 
+    // Apply a transform to every line touched by the selection (or the current
+    // line). Returns the replacement range plus adjusted caret positions.
+    function transformSelectedLines(value, start, end, transformLine) {
+      const from = value.lastIndexOf("\n", start - 1) + 1;
+      let to;
+      if (start === end) {
+        to = value.indexOf("\n", start);
+        if (to === -1) to = value.length;
+      } else {
+        const endPos = value[end - 1] === "\n" ? end - 1 : end;
+        to = value.indexOf("\n", endPos);
+        if (to === -1) to = value.length;
+      }
+
+      const lines = value.slice(from, to).split("\n");
+      let caretAdjust = 0;
+      let endAdjust = 0;
+      let walk = from;
+      const updated = lines.map((line) => {
+        const next = transformLine(line);
+        const diff = next.length - line.length;
+        // Changes always happen at the start of the line (indent / # comment)
+        if (start > walk) caretAdjust += diff;
+        if (end > walk) endAdjust += diff;
+        walk += line.length + 1;
+        return next;
+      });
+
+      return {
+        from,
+        to,
+        text: updated.join("\n"),
+        newStart: Math.max(from, start + caretAdjust),
+        newEnd: Math.max(from, end + endAdjust),
+      };
+    }
+
+    const PAIR_CLOSER = { "(": ")", "[": "]", "{": "}", '"': '"', "'": "'" };
+    const PAIR_OPENER = { ")": "(", "]": "[", "}": "{" };
+
     editor.addEventListener("input", scheduleSave);
 
     editor.addEventListener("keydown", (e) => {
       const start = editor.selectionStart;
       const end = editor.selectionEnd;
       const value = editor.value;
+      const hasSelection = start !== end;
+      const prevChar = value.slice(start - 1, start);
+      const nextChar = value.slice(start, start + 1);
+      const mod = e.ctrlKey || e.metaKey;
 
-      // Shift+Tab: dedent the current line by up to 4 spaces
+      // Ctrl+/ : toggle # comments on selected lines
+      if (mod && e.key === "/") {
+        e.preventDefault();
+        const result = transformSelectedLines(value, start, end, (line) => {
+          if (/^\s*#/.test(line)) return line.replace(/^(\s*)#\s?/, "$1");
+          if (line.trim() === "") return line;
+          return line.replace(/^(\s*)/, "$1# ");
+        });
+        replaceRange(result.from, result.to, result.text);
+        editor.selectionStart = result.newStart;
+        editor.selectionEnd = result.newEnd;
+        return;
+      }
+
+      // Shift+Tab: dedent line(s)
       if (e.key === "Tab" && e.shiftKey) {
         e.preventDefault();
-        const { lineStart } = currentLineIndent(value, start);
-        const lead = value.slice(lineStart).match(/^[ \t]{1,4}/);
-        if (lead) {
-          const removed = lead[0].length;
-          replaceRange(lineStart, lineStart + removed, "");
-          const newPos = Math.max(lineStart, start - removed);
-          editor.selectionStart = editor.selectionEnd = newPos;
+        const result = transformSelectedLines(value, start, end, (line) =>
+          line.replace(/^[ \t]{1,4}/, "")
+        );
+        replaceRange(result.from, result.to, result.text);
+        editor.selectionStart = result.newStart;
+        editor.selectionEnd = hasSelection ? result.newEnd : result.newStart;
+        return;
+      }
+
+      // Tab: indent selection, or insert 4 spaces
+      if (e.key === "Tab") {
+        e.preventDefault();
+        if (hasSelection) {
+          const result = transformSelectedLines(value, start, end, (line) => "    " + line);
+          replaceRange(result.from, result.to, result.text);
+          editor.selectionStart = result.newStart;
+          editor.selectionEnd = result.newEnd;
+        } else {
+          replaceRange(start, end, "    ", 4);
         }
         return;
       }
 
-      // Tab: insert 4 spaces
-      if (e.key === "Tab") {
-        e.preventDefault();
-        replaceRange(start, end, "    ", 4);
-        return;
-      }
-
       // Ctrl+Enter: run Analyze
-      if (e.key === "Enter" && e.ctrlKey && window.HAS_INTERACTIVE) {
+      if (e.key === "Enter" && mod && window.HAS_INTERACTIVE) {
         e.preventDefault();
         document.getElementById("btn-analyze")?.click();
         return;
@@ -789,12 +851,10 @@
 
       // Enter: keep indentation, add a level after an opener or ":", and
       // expand an empty bracket pair onto its own indented line.
-      if (e.key === "Enter" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.key === "Enter" && !mod && !e.altKey) {
         e.preventDefault();
         const { indent, line } = currentLineIndent(value, start);
         const trimmed = line.trim();
-        const prevChar = value.slice(start - 1, start);
-        const nextChar = value.slice(start, start + 1);
         const opensBlock = /[([{]$/.test(trimmed) || trimmed.endsWith(":");
 
         const pairBetween =
@@ -814,6 +874,51 @@
         const insert = "\n" + indent + (opensBlock ? "    " : "");
         replaceRange(start, end, insert, insert.length);
         return;
+      }
+
+      // Backspace: delete empty pair (|), [|], {|}, "|"
+      if (e.key === "Backspace" && !hasSelection && !mod) {
+        const close = PAIR_CLOSER[prevChar];
+        if (close && nextChar === close) {
+          e.preventDefault();
+          replaceRange(start - 1, start + 1, "", 0);
+          return;
+        }
+      }
+
+      // Skip over an existing closer when typing it
+      if (!hasSelection && !mod && PAIR_OPENER[e.key] && nextChar === e.key) {
+        e.preventDefault();
+        editor.selectionStart = editor.selectionEnd = start + 1;
+        return;
+      }
+
+      // Auto-close brackets / quotes (or wrap the selection)
+      if (!mod && !e.altKey && PAIR_CLOSER[e.key]) {
+        const open = e.key;
+        const close = PAIR_CLOSER[open];
+
+        // Don't auto-close apostrophe inside a word: don't → don't
+        if (open === "'" && /[A-Za-z0-9_]/.test(prevChar)) {
+          return;
+        }
+
+        // Skip auto-inserting a quote when the next char is already that quote
+        if ((open === '"' || open === "'") && nextChar === open && !hasSelection) {
+          e.preventDefault();
+          editor.selectionStart = editor.selectionEnd = start + 1;
+          return;
+        }
+
+        e.preventDefault();
+        if (hasSelection) {
+          const selected = value.slice(start, end);
+          replaceRange(start, end, open + selected + close);
+          editor.selectionStart = start + 1;
+          editor.selectionEnd = start + 1 + selected.length;
+        } else {
+          replaceRange(start, end, open + close, 1);
+        }
       }
     });
 
