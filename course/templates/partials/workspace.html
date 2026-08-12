@@ -17,7 +17,7 @@
     </div>
     <div class="workspace-actions">
       {% if has_interactive_steps %}
-      <button class="btn btn-sm btn-analyze" id="btn-analyze" title="Ctrl+Enter">✦ Analyze</button>
+      <button class="btn btn-sm btn-analyze" id="btn-analyze" title="Ctrl+Enter — checks your steps AND runs the script">✦ Analyze + Run</button>
       {% endif %}
       <button class="btn btn-sm btn-secondary" id="btn-save">Save</button>
       <button class="btn btn-sm btn-secondary" id="btn-run">▶ Run</button>
@@ -27,12 +27,12 @@
     </div>
   </div>
 
-  <textarea id="code-editor" class="code-editor" spellcheck="false" placeholder="# Type your code here — hit Analyze (Ctrl+Enter) after each step…">{{ workspace_content }}</textarea>
+  <textarea id="code-editor" class="code-editor" spellcheck="false" placeholder="# Type your code here — hit Analyze + Run (Ctrl+Enter) after each step…">{{ workspace_content }}</textarea>
 
   <div class="analyze-panel" id="analyze-panel">
     <div class="analyze-summary" id="analyze-summary">
       <span class="analyze-icon">✦</span>
-      <span id="analyze-summary-text">Type code above, then click <strong>Analyze</strong> to check your work.</span>
+      <span id="analyze-summary-text">Type code above, then click <strong>Analyze + Run</strong> to check your steps and see the output.</span>
     </div>
     <div class="analyze-checks" id="analyze-checks"></div>
   </div>
@@ -42,6 +42,6 @@
       <span>Run output</span>
       <button class="btn-clear" id="btn-clear-terminal">Clear</button>
     </div>
-    <pre class="terminal-body" id="terminal-body"><span class="terminal-muted">Use ▶ Run to execute your script.</span></pre>
+    <pre class="terminal-body" id="terminal-body"><span class="terminal-muted">Analyze + Run checks your steps and executes the script. ▶ Run alone just executes.</span></pre>
   </div>
 </div>

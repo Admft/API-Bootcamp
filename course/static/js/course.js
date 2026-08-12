@@ -435,7 +435,7 @@
     const checksEl = document.getElementById("analyze-checks");
     const summaryEl = document.getElementById("analyze-summary");
     if (summaryEl) summaryEl.classList.remove("pass", "fail", "warn");
-    if (summaryText) summaryText.textContent = "Type code for this exercise, then hit Analyze.";
+    if (summaryText) summaryText.textContent = "Type code for this exercise, then hit Analyze + Run.";
     if (checksEl) checksEl.innerHTML = "";
   }
 
@@ -922,26 +922,33 @@
       }
     });
 
-    document.getElementById("btn-save")?.addEventListener("click", saveFile);
-
-    document.getElementById("btn-analyze")?.addEventListener("click", async () => {
-      await saveFile();
-      if (window.HAS_INTERACTIVE) await analyzeCode(editor);
-    });
-
-    document.getElementById("btn-run")?.addEventListener("click", async () => {
-      await saveFile();
+    async function runScript() {
       terminal.innerHTML = '<span class="terminal-muted">Running…</span>';
       const res = await fetch("/api/run/" + window.WORKSPACE_FILE, { method: "POST" });
       const data = await res.json();
       if (data.error) {
         terminal.innerHTML = '<span class="terminal-error">' + escapeHtml(data.error) + "</span>";
-        return;
+        return data;
       }
       let out = (data.stdout || "") + (data.stderr ? (data.stdout ? "\n" : "") + data.stderr : "");
       terminal.innerHTML = data.success
         ? '<span class="terminal-success">' + escapeHtml(out || "(no output)") + "</span>"
         : '<span class="terminal-error">' + escapeHtml(out || "Script failed") + "</span>";
+      return data;
+    }
+
+    document.getElementById("btn-save")?.addEventListener("click", saveFile);
+
+    document.getElementById("btn-analyze")?.addEventListener("click", async () => {
+      await saveFile();
+      if (window.HAS_INTERACTIVE) await analyzeCode(editor);
+      // Always run too — seeing the real output is part of learning, not just the checklist
+      await runScript();
+    });
+
+    document.getElementById("btn-run")?.addEventListener("click", async () => {
+      await saveFile();
+      await runScript();
     });
 
     document.getElementById("btn-verify")?.addEventListener("click", async () => {

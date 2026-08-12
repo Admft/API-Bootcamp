@@ -16,3 +16,6 @@ response = requests.get(
     params=params,
     timeout=30,
 )
+
+data = response.json()
+print(len(data["data"]))
