@@ -271,6 +271,7 @@ def lesson_steps_api(lesson_id):
                     "why": s.get("why", ""),
                     "common_mistake": s.get("common_mistake", ""),
                     "reveal_after_fails": s.get("reveal_after_fails", 2),
+                    "annotations": s.get("annotations", []),
                 }
                 for s in steps
             ],

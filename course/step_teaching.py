@@ -7,6 +7,8 @@ not only what to type.
 
 from __future__ import annotations
 
+import re
+
 
 def enrich_steps(steps, lesson_key: str = ""):
     """Return a shallow-copied list of steps with `context` filled in."""
@@ -19,8 +21,134 @@ def enrich_steps(steps, lesson_key: str = ""):
             enriched["why"] = _short_why(enriched, enriched["context"])
         if not (enriched.get("common_mistake") or "").strip():
             enriched["common_mistake"] = _guess_mistake(enriched)
+        if not enriched.get("annotations"):
+            enriched["annotations"] = annotate_example(enriched.get("example", ""))
         out.append(enriched)
     return out
+
+
+def annotate_example(example: str) -> list[dict]:
+    """Break an example into lines, each paired with a plain-English note.
+
+    Powers the "Explain each line" toggle so a stuck learner can see what every
+    line does without having to guess or write throwaway comments in the code.
+    """
+    lines = (example or "").split("\n")
+    return [{"code": line, "note": explain_line(line)} for line in lines]
+
+
+def explain_line(line: str) -> str:
+    raw = line
+    s = line.strip()
+    if not s:
+        return "Blank line — just spacing to keep the code readable."
+    if s.startswith("#"):
+        return "A comment. Python ignores it; it's a note for humans."
+
+    low = s.lower()
+
+    # ── Imports ──
+    if re.match(r"^from\s+dotenv\s+import\s+load_dotenv", s):
+        return (
+            "Pull the load_dotenv function out of the python-dotenv library so you "
+            "can call it below."
+        )
+    if re.match(r"^import\s+os\b", s):
+        return "Load Python's os module so you can read environment variables with os.getenv."
+    if re.match(r"^import\s+requests\b", s):
+        return "Load the requests library — it sends HTTP requests (GET/POST) to APIs."
+    if re.match(r"^import\s+json\b", s):
+        return "Load the json module for converting between Python objects and JSON text."
+    m = re.match(r"^(?:from\s+\S+\s+)?import\s+(.+)", s)
+    if m:
+        return f"Import {m.group(1).strip()} so this file can use it."
+
+    # ── dotenv ──
+    if re.match(r"load_dotenv\s*\(", s):
+        return (
+            "Read the .env file and copy its KEY=value pairs into the environment. "
+            "Without this call, os.getenv can't see them."
+        )
+
+    # ── Assignment from os.getenv ──
+    m = re.match(
+        r"^([A-Za-z_]\w*)\s*=\s*os\.getenv\(\s*['\"]([^'\"]+)['\"]\s*(?:,\s*['\"]?([^)'\"]*)['\"]?)?\s*\)",
+        s,
+    )
+    if m:
+        var, env, default = m.group(1), m.group(2), m.group(3)
+        base = f"Read {env} from the environment and store it in {var}."
+        if default:
+            return base + f" If {env} isn't set, fall back to \"{default.strip()}\"."
+        return base + " Returns None if it isn't set — a common cause of 'Bearer None' 401s."
+
+    # ── Headers / auth ──
+    if "{" in s and ("authorization" in low or "bearer" in low):
+        return (
+            'Build the request headers. "Authorization: Bearer <key>" is how the API '
+            "knows who you are."
+        )
+    if "bearer" in low or "authorization" in low:
+        return 'Set the Authorization header to "Bearer <your key>" so the API accepts the request.'
+
+    # ── requests.* calls ──
+    if "requests.get(" in low:
+        return "Send an HTTP GET request (read data) and keep what comes back in response."
+    if "requests.post(" in low:
+        return "Send an HTTP POST request (create something) and keep the response."
+    if "requests.patch(" in low:
+        return "Send an HTTP PATCH request (update a few fields) and keep the response."
+    if "requests.put(" in low:
+        return "Send an HTTP PUT request (replace the whole resource) and keep the response."
+    if "requests.delete(" in low:
+        return "Send an HTTP DELETE request (remove the resource) and keep the response."
+
+    if "raise_for_status" in low:
+        return "Turn any 4xx/5xx HTTP error into a Python exception so failures are obvious."
+    if ".json()" in low:
+        return "Parse the JSON response body into Python dicts/lists you can index by key."
+
+    # ── print(...) ──
+    if re.match(r"^print\s*\(", s):
+        if "status_code" in low:
+            return "Print the HTTP status code (200 = OK, 401 = bad auth, 404 = wrong URL)."
+        if "len(" in low:
+            return "Print how many items came back — a quick check on your filter or fetch."
+        return "Print a value so you can see it in the output."
+
+    # ── params ──
+    if re.match(r"^params\s*=", s):
+        return "Build a params dict — requests turns it into ?key=value on the URL for you."
+
+    # ── Continuation lines inside a multi-line call ──
+    if raw[:1] in (" ", "\t"):
+        if "headers=headers" in low:
+            return "Attach the headers dict (with your Bearer token) to this request."
+        if "timeout" in low:
+            return "Give up after this many seconds instead of hanging forever."
+        if re.search(r"params\s*=", low):
+            return "Pass the query filters to the API."
+        if "http" in low or "/v1/" in low or s[:1] in ("'", '"'):
+            return "The URL / endpoint being called."
+    if s == ")":
+        return "Closes the call started on the line above."
+    if s == "}":
+        return "Closes the dictionary started above."
+
+    # ── Control flow ──
+    if re.match(r"^for\s+\w+\s+in\s+", s):
+        return "Loop over each item in the list, running the indented lines once per item."
+    if re.match(r"^if\s+", s):
+        return "Only run the indented block when this condition is true."
+    if re.match(r"^def\s+\w+", s):
+        return "Define a reusable function you can call by name later."
+
+    # ── Generic assignment ──
+    m = re.match(r"^([A-Za-z_]\w*)\s*=", s)
+    if m:
+        return f"Store a value in the variable {m.group(1)} so you can reuse it below."
+
+    return "Part of the step — read it and say out loud what it does."
 
 
 def build_context(step: dict, lesson_key: str = "") -> str:
@@ -700,4 +828,5 @@ def public_step_fields(step: dict) -> dict:
         "why": step.get("why", ""),
         "common_mistake": step.get("common_mistake", ""),
         "reveal_after_fails": step.get("reveal_after_fails", 2),
+        "annotations": step.get("annotations", []),
     }

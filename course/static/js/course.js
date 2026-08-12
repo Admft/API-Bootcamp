@@ -307,6 +307,7 @@
   let analyzeFailCounts = {};
   let hideExamplesDefault = false;
   let revealedSteps = {};
+  let explainOpen = {};
 
   function updateExercisePickerUI() {
     const picker = document.getElementById("exercise-picker");
@@ -414,6 +415,7 @@
     hideExamplesDefault = !!data.hide_examples;
     analyzeFailCounts = {};
     revealedSteps = {};
+    explainOpen = {};
 
     const saved = parseInt(
       localStorage.getItem(STEP_STORAGE_PREFIX + window.LESSON_ID + "-" + exerciseId) || "0",
@@ -516,6 +518,22 @@
             ? `<p class="step-exam-hint">Exam mode: examples stay hidden until you try Analyze a couple times.</p>`
             : "";
 
+        const annotations = Array.isArray(step.annotations) ? step.annotations : [];
+        const canExplain = isActive && annotations.length > 0;
+        const explainShown = canExplain && !!explainOpen[i];
+        const explainBtnHtml = canExplain
+          ? `<button type="button" class="btn btn-sm btn-secondary btn-explain-lines" data-explain-step="${i}">${explainShown ? "Hide line-by-line" : "Explain each line"}</button>`
+          : "";
+        const explainHtml = explainShown
+          ? `<div class="step-explain"><div class="step-label">Line by line</div>${annotations
+              .filter((a) => (a.code || "").trim() !== "")
+              .map(
+                (a) =>
+                  `<div class="explain-row"><code class="explain-code">${escapeHtml(a.code)}</code><span class="explain-note">${escapeHtml(a.note)}</span></div>`
+              )
+              .join("")}</div>`
+          : "";
+
         return `<div class="step-card ${status} active" data-step="${i}">
           <div class="step-card-head">
             <span class="step-num">${isPassed ? "✓" : i + 1}</span>
@@ -530,6 +548,8 @@
           ${mistakeHtml}
           ${revealHtml}
           ${exampleHtml}
+          ${explainBtnHtml}
+          ${explainHtml}
         </div>`;
       })
       .join("");
@@ -537,6 +557,7 @@
     list.querySelectorAll(".step-card.passed.collapsed, .step-card.active").forEach((card) => {
       card.addEventListener("click", (e) => {
         if (e.target.closest(".btn-reveal-example")) return;
+        if (e.target.closest(".btn-explain-lines")) return;
         const idx = parseInt(card.dataset.step, 10);
         if (getStepStatus(idx) === "passed" || idx === currentStepIndex) {
           currentStepIndex = idx;
@@ -550,6 +571,15 @@
         e.stopPropagation();
         const idx = parseInt(btn.dataset.revealStep, 10);
         revealedSteps[idx] = true;
+        renderStepsList();
+      });
+    });
+
+    list.querySelectorAll(".btn-explain-lines").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.explainStep, 10);
+        explainOpen[idx] = !explainOpen[idx];
         renderStepsList();
       });
     });
@@ -698,23 +728,92 @@
       if (res.ok) setSaved();
     }
 
-    editor.addEventListener("input", () => {
+    function scheduleSave() {
       setUnsaved();
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(saveFile, 1500);
-    });
+    }
+
+    // Programmatic edits to textarea.value don't fire "input", so mutate the
+    // editor and then schedule a save/undo checkpoint ourselves.
+    function replaceRange(from, to, text, caretOffset) {
+      const value = editor.value;
+      editor.setRangeText(text, from, to, "end");
+      if (typeof caretOffset === "number") {
+        editor.selectionStart = editor.selectionEnd = from + caretOffset;
+      }
+      scheduleSave();
+    }
+
+    function currentLineIndent(value, caret) {
+      const lineStart = value.lastIndexOf("\n", caret - 1) + 1;
+      const line = value.slice(lineStart, caret);
+      const match = line.match(/^[ \t]*/);
+      return { indent: match ? match[0] : "", lineStart, line };
+    }
+
+    editor.addEventListener("input", scheduleSave);
 
     editor.addEventListener("keydown", (e) => {
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const value = editor.value;
+
+      // Shift+Tab: dedent the current line by up to 4 spaces
+      if (e.key === "Tab" && e.shiftKey) {
+        e.preventDefault();
+        const { lineStart } = currentLineIndent(value, start);
+        const lead = value.slice(lineStart).match(/^[ \t]{1,4}/);
+        if (lead) {
+          const removed = lead[0].length;
+          replaceRange(lineStart, lineStart + removed, "");
+          const newPos = Math.max(lineStart, start - removed);
+          editor.selectionStart = editor.selectionEnd = newPos;
+        }
+        return;
+      }
+
+      // Tab: insert 4 spaces
       if (e.key === "Tab") {
         e.preventDefault();
-        const start = editor.selectionStart;
-        editor.value = editor.value.slice(0, start) + "    " + editor.value.slice(editor.selectionEnd);
-        editor.selectionStart = editor.selectionEnd = start + 4;
-        setUnsaved();
+        replaceRange(start, end, "    ", 4);
+        return;
       }
+
+      // Ctrl+Enter: run Analyze
       if (e.key === "Enter" && e.ctrlKey && window.HAS_INTERACTIVE) {
         e.preventDefault();
         document.getElementById("btn-analyze")?.click();
+        return;
+      }
+
+      // Enter: keep indentation, add a level after an opener or ":", and
+      // expand an empty bracket pair onto its own indented line.
+      if (e.key === "Enter" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const { indent, line } = currentLineIndent(value, start);
+        const trimmed = line.trim();
+        const prevChar = value.slice(start - 1, start);
+        const nextChar = value.slice(start, start + 1);
+        const opensBlock = /[([{]$/.test(trimmed) || trimmed.endsWith(":");
+
+        const pairBetween =
+          /[([{]/.test(prevChar) &&
+          ((prevChar === "(" && nextChar === ")") ||
+            (prevChar === "[" && nextChar === "]") ||
+            (prevChar === "{" && nextChar === "}"));
+
+        if (pairBetween) {
+          const inner = "\n" + indent + "    ";
+          const closingLine = "\n" + indent;
+          replaceRange(start, end, inner + closingLine);
+          editor.selectionStart = editor.selectionEnd = start + inner.length;
+          return;
+        }
+
+        const insert = "\n" + indent + (opensBlock ? "    " : "");
+        replaceRange(start, end, insert, insert.length);
+        return;
       }
     });
 
