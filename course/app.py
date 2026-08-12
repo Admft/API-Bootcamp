@@ -5,6 +5,7 @@ Run:  python course/app.py
 Open: http://127.0.0.1:8080
 """
 
+import json
 import re
 import subprocess
 import sys
@@ -37,6 +38,21 @@ app = Flask(__name__)
 app.config["ROOT"] = ROOT
 
 MD_EXTENSIONS = ["fenced_code", "tables", "nl2br", "sane_lists"]
+PROGRESS_FILE = ROOT / ".data" / "progress.json"
+
+
+def read_progress_file():
+    if not PROGRESS_FILE.exists():
+        return {}
+    try:
+        return json.loads(PROGRESS_FILE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def write_progress_file(data):
+    PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    PROGRESS_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def render_md(text):
@@ -131,6 +147,32 @@ def mock_status():
     return jsonify(status)
 
 
+@app.route("/api/progress", methods=["GET", "POST", "DELETE"])
+def progress_sync():
+    """Single shared progress blob — no login. Syncs across any browser hitting this server."""
+    if request.method == "GET":
+        return jsonify({"progress": read_progress_file()})
+
+    if request.method == "DELETE":
+        if PROGRESS_FILE.exists():
+            PROGRESS_FILE.unlink()
+        return jsonify({"ok": True, "cleared": True})
+
+    data = request.get_json(silent=True) or {}
+    progress = data.get("progress")
+    if not isinstance(progress, dict):
+        return jsonify({"error": "Expected { progress: { ... } }"}), 400
+
+    # Only keep bootcamp keys
+    cleaned = {
+        key: value
+        for key, value in progress.items()
+        if isinstance(key, str) and key.startswith("api-bootcamp-")
+    }
+    write_progress_file(cleaned)
+    return jsonify({"ok": True, "keys": len(cleaned)})
+
+
 @app.route("/api/workspace/<filename>", methods=["GET", "POST"])
 def workspace(filename):
     path = safe_workspace_path(filename)
@@ -140,8 +182,17 @@ def workspace(filename):
     MY_WORK.mkdir(parents=True, exist_ok=True)
 
     if request.method == "GET":
+        starter = request.args.get("starter")
         if path.exists():
             return jsonify({"content": path.read_text(encoding="utf-8"), "exists": True})
+        if starter:
+            # Allow only files under exercises/broken/
+            starter_name = Path(starter).name
+            starter_path = ROOT / "exercises" / "broken" / starter_name
+            if starter_path.exists() and starter_path.is_file():
+                content = starter_path.read_text(encoding="utf-8")
+                path.write_text(content, encoding="utf-8")
+                return jsonify({"content": content, "exists": True, "seeded_from": starter_name})
         return jsonify({"content": "", "exists": False})
 
     data = request.get_json(silent=True) or {}
@@ -188,6 +239,8 @@ def exercises_api(lesson_id):
                     "scenario": ex["scenario"],
                     "workspace_file": ex["workspace_file"],
                     "has_verify": bool(ex.get("verify_script")),
+                    "starter_file": ex.get("starter_file"),
+                    "hide_examples": bool(ex.get("hide_examples") or str(lesson_id).startswith("exam-")),
                 }
                 for ex in exercises
             ]
@@ -204,11 +257,20 @@ def lesson_steps_api(lesson_id):
     return jsonify(
         {
             "interactive": True,
+            "hide_examples": bool(
+                (get_exercise(lesson_id, exercise_id) or {}).get("hide_examples")
+                or str(lesson_id).startswith("exam-")
+            ),
             "steps": [
                 {
                     "id": s["id"],
                     "title": s["title"],
                     "instruction": s.get("instruction", ""),
+                    "example": s.get("example", ""),
+                    "context": s.get("context", ""),
+                    "why": s.get("why", ""),
+                    "common_mistake": s.get("common_mistake", ""),
+                    "reveal_after_fails": s.get("reveal_after_fails", 2),
                 }
                 for s in steps
             ],

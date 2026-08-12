@@ -1,6 +1,18 @@
-# One-Day API Integration Bootcamp
+# Samsara Sales Engineer API & Python Bootcamp
 
-**Goal:** Read API docs → authenticate → call endpoints → transform JSON → sync systems → document it.
+**Target role:** Sales Engineer — Mid-Market Southeast  
+**Goal:** Read API docs → discover the customer need → authenticate → call endpoints → transform JSON → sync systems → document and demo the business outcome.
+
+This course is designed around the role described in `JobDescription.txt`, especially:
+
+- Writing reusable scripts against an open API
+- Automating data transfer between business systems with Python
+- Building and presenting proof-of-concept integrations
+- Connecting IoT/operational events to customer workflows
+- Explaining cloud, networking, authentication, and integration concepts to non-technical stakeholders
+- Producing documentation another Sales Engineer can reuse
+
+> **Training boundary:** The local endpoints and data in this repository are fictional. They simulate a connected-operations platform and a customer work-order system; they are not official Samsara API endpoints or schemas.
 
 ---
 
@@ -34,12 +46,13 @@ Open **http://127.0.0.1:8080** — interactive lessons, built-in code editor, pr
 | **1:30–2:30** | Reliability | `guides/05_reliability_type_along.md` → `my-work/05_reliability.py` | Pagination, errors |
 | **2:30–3:30** | Bash/JS recognition | `cheatsheets/http-api-basics.md` (bottom section) | Same HTTP, different syntax |
 | **3:30–6:00** | Capstone | `guides/06_capstone_type_along.md` → `my-work/06_sync_incidents.py` | Full integration you typed |
-| **6:00–7:00** | Document | `capstone/README.md`, `templates/` | SE-ready documentation |
-| **7:00+** | Self-test | `SELF_TEST.md` | Rebuild from blank screen |
+| **6:00–7:00** | Document + demo | `capstone/README.md`, `ROLE_PLAYBOOK.md` | SE-ready documentation and a customer-facing demo |
+| **7:00+** | Self-test | `SELF_TEST.md` | Rebuild and explain from a blank screen |
 
 **Rule:** ~3 hours learning, rest **building**. Type every line yourself — run after each step.
 
-**Start here:** `exercises/START_HERE.md`
+**Start here:** `exercises/START_HERE.md`  
+**Keep the role lens open:** `ROLE_PLAYBOOK.md`
 
 ---
 
@@ -48,6 +61,7 @@ Open **http://127.0.0.1:8080** — interactive lessons, built-in code editor, pr
 ```
 Learn Python/
 ├── README.md                 ← You are here (schedule + strategy)
+├── ROLE_PLAYBOOK.md          ← Discovery, demo, value, and interview practice
 ├── SELF_TEST.md              ← Final exam — do this tonight
 ├── setup.ps1                 ← One-command setup
 ├── requirements.txt
@@ -94,19 +108,21 @@ Learn Python/
 If you're running out of time, study in this order — **don't reverse it:**
 
 ```
-                    nice
-                 ┌────────┐
-                 │ Bash/JS│
-              ┌──┴────────┴──┐
-              │ Logging/retry │
-           ┌──┴───────────────┴──┐
-           │ Pagination + errors  │
-        ┌──┴──────────────────────┴──┐
-        │ Python requests + JSON      │
-     ┌──┴─────────────────────────────┴──┐
-     │ HTTP + API docs + authentication   │
-     └────────────────────────────────────┘
-                  MUST KNOW
+                         nice
+                      ┌────────┐
+                      │Bash/JS │
+                   ┌──┴────────┴──┐
+                   │ Logging/retry │
+                ┌──┴───────────────┴──┐
+                │ Pagination + errors  │
+             ┌──┴──────────────────────┴──┐
+             │ Python requests + JSON      │
+          ┌──┴─────────────────────────────┴──┐
+          │ HTTP + API docs + authentication   │
+       ┌──┴────────────────────────────────────┴──┐
+       │ Discovery → business value → clear demo  │
+       └──────────────────────────────────────────┘
+                       MUST SHOW
 ```
 
 ---
@@ -155,7 +171,11 @@ for incident in incidents:
     result.raise_for_status()
 ```
 
-That's the job: **GET → filter → transform → POST → handle errors → document.**
+That's the technical pattern: **GET → filter → transform → POST → handle errors → document.**
+
+For this Sales Engineer role, the complete pattern is:
+
+**discover the workflow → define success → build the smallest useful integration → demo the outcome → explain deployment and risk**
 
 ---
 
@@ -170,7 +190,7 @@ That's the job: **GET → filter → transform → POST → handle errors → do
 
 ## Your Pitch (after today)
 
-> "I built a lightweight integration that retrieves operational incidents from a monitoring API, filters critical events, maps the source schema into the destination ticketing schema, and creates actionable work orders. Authentication is handled through environment variables, requests have error handling and timeouts, and the implementation is documented for other Sales Engineers."
+> "I built a lightweight proof of concept for a connected-operations customer. It retrieves high-priority operational events through an open API, maps them into the customer's work-order schema, and creates actionable tickets without duplicates. I can explain the authentication, data flow, failure handling, and deployment assumptions, and I documented the script so another Sales Engineer can reuse it. The business outcome is a faster, more consistent response to safety and maintenance events."
 
 ---
 
@@ -178,4 +198,4 @@ That's the job: **GET → filter → transform → POST → handle errors → do
 
 Open `SELF_TEST.md`. Rebuild the integration from scratch without looking at solutions.
 
-If you pass all 10 tasks, you're demo-ready.
+You are ready when you can both build the integration and deliver the five-minute customer demo in `ROLE_PLAYBOOK.md`.

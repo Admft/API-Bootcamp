@@ -1,5 +1,7 @@
 # Type-Along 03 — Your First API Script (45 min)
 
+**Use the on-screen steps with examples** — type one step, click Analyze, then go to the next. Don't binge the whole guide.
+
 **Prerequisites:** Mock APIs running (`python mock-apis/run_servers.py`)
 
 **Create a new empty file:** `exercises/my-work/03_get_incidents.py`

@@ -1,8 +1,10 @@
-# Type-Along 06 — Full Integration (90 min)
+# Type-Along 06 — Connected Operations POC (90 min)
 
 **Create a new empty file:** `exercises/my-work/06_sync_incidents.py`
 
-Combine everything: fetch, paginate, filter, transform, POST, handle errors, log results.
+Combine everything: fetch, paginate, filter, transform, POST, handle errors, and log results. Treat the script as a customer proof of concept, not just a coding assignment.
+
+Before coding, read the customer scenario and discovery questions in `ROLE_PLAYBOOK.md`. State the customer problem and POC success criteria out loud.
 
 Don't look at `capstone/sync_incidents.py` until you're done.
 
@@ -161,15 +163,17 @@ python exercises/my-work/06_sync_incidents.py
 
 ---
 
-## Step 8 — Document it (15 min)
+## Step 8 — Document it like an SE (20 min)
 
 Create `exercises/my-work/06_README.md` — type your own using this outline:
 
-1. **Purpose** — one paragraph
-2. **Environment variables** — table
-3. **How to run**
-4. **Field mapping** — source column → destination column
-5. **What happens on errors**
+1. **Customer problem and business outcome**
+2. **Measurable POC success criteria**
+3. **Environment variables** — table
+4. **How to run**
+5. **Field mapping** — source column → destination column
+6. **What happens on errors and duplicates**
+7. **Assumptions and production-validation steps**
 
 Compare with `templates/integration-readme-template.md` when done.
 
@@ -179,6 +183,8 @@ Compare with `templates/integration-readme-template.md` when done.
 
 Restart mock APIs (clears tickets), run your script fresh.
 
-Then open `SELF_TEST.md` and try rebuilding a minimal version from **blank file** in under 45 minutes.
+Then deliver the five-minute demo in `ROLE_PLAYBOOK.md`. Do not narrate code line by line—explain the workflow, customer value, technical choices, limitations, and next step.
 
-You passed the bootcamp when you can do that without guides.
+Finally, open `SELF_TEST.md` and try rebuilding a minimal version from **blank file** in under 45 minutes.
+
+You passed the bootcamp when you can build it without guides and explain it clearly to both technical and non-technical stakeholders.

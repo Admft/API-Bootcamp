@@ -1,5 +1,7 @@
 # Type-Along 02 — Python Basics (45 min)
 
+**Use the on-screen steps with examples** — type one step, click Analyze, then go to the next. Don't binge the whole guide.
+
 **Create a new empty file:** `exercises/my-work/02_basics.py`
 
 Type each step. Save and run after every checkpoint.

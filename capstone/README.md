@@ -1,13 +1,27 @@
-# Critical Incident → Ticket Integration
+# Connected Operations Event → Work Order POC
 
 ## Purpose
 
-Retrieves critical and high-severity operational incidents from a utility monitoring API and creates corresponding work orders in a ticketing system. Built for Sales Engineers who need a documented, repeatable integration pattern.
+Retrieves critical and high-severity operational events from a connected-operations API and creates corresponding work orders in a customer's ticketing system. It simulates the type of open-API proof of concept a Samsara Sales Engineer may build and document.
+
+The local APIs and schemas are fictional training resources, not official Samsara endpoints.
+
+## Customer Problem
+
+Dispatch and maintenance teams currently copy urgent events into their work-order system by hand. The delay and inconsistent data entry can slow response, create duplicate effort, and weaken reporting.
+
+## POC Success Criteria
+
+- Every open critical or high-severity event becomes a correctly mapped work order
+- Running the integration again does not create duplicates
+- Credentials do not appear in source code
+- Operators can see created, skipped, and failed counts
+- Another Sales Engineer can run and explain the POC from the documentation
 
 ## Architecture
 
 ```
-Monitoring API (source)          Ticketing API (destination)
+Connected operations API        Customer work-order API
      GET /v1/incidents      →         POST /v1/tickets
      Bearer auth                     Bearer auth
             ↓                              ↑
@@ -53,6 +67,15 @@ python capstone/sync_incidents.py --dry-run
 5. POST each ticket; skip duplicates (409 or local state file)
 6. Log results
 
+## Discovery Assumptions to Validate
+
+- Which event types and severities require action?
+- Which team owns each generated work order?
+- What response time does the customer need?
+- Which destination fields are mandatory?
+- Should the production design poll, consume webhooks, or use another event mechanism?
+- What volume, rate limits, retention, and security controls apply?
+
 ## Field Mapping
 
 | Source (incident) | Destination (ticket) |
@@ -79,6 +102,17 @@ Credentials are supplied through environment variables and are not committed to 
 - Local `processed_ids.json` tracks synced incident IDs across runs
 - Destination API returns 409 if `external_id` already exists
 - Re-running the script does not create duplicate tickets
+
+## Demo Talk Track
+
+1. Restate the customer's manual workflow and desired outcome
+2. Show the authenticated GET and JSON response in Postman
+3. Run the Python script and show the created work orders
+4. Run it again and explain the duplicate skips
+5. Explain the data mapping, errors, security, and deployment assumptions
+6. Close with production-validation steps and measurable POC acceptance criteria
+
+See `ROLE_PLAYBOOK.md` for the complete five-minute demo.
 
 ## Troubleshooting
 

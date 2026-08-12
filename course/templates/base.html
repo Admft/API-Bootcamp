@@ -11,14 +11,15 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  <div class="app-shell">
+  <div class="app-shell" id="app-shell">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <div class="brand-icon">{ }</div>
         <div>
           <strong>API Bootcamp</strong>
-          <span>One-day intensive</span>
+          <span>Mastery path</span>
         </div>
+        <button type="button" class="sidebar-hide-btn" id="btn-hide-sidebar" title="Hide sidebar" aria-label="Hide sidebar">«</button>
       </div>
 
       <div class="progress-block">
@@ -27,6 +28,7 @@
           <span id="progress-pct">0%</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-count" id="progress-count">0/{{ total_lessons | default(0) }} lessons</div>
       </div>
 
       <div class="api-status" id="api-status">
@@ -51,6 +53,8 @@
       </nav>
     </aside>
 
+    <button type="button" class="sidebar-show-btn" id="btn-show-sidebar" title="Show course menu" aria-label="Show course menu">☰ Menu</button>
+
     <main class="main-content">
       {% block content %}{% endblock %}
     </main>
@@ -58,6 +62,13 @@
 
   <script>
     window.COURSE_TOTAL = {{ total_lessons | default(0) }};
+    {% if lesson is defined and lesson %}
+    window.LESSON_ID = {{ lesson.id | tojson }};
+    window.LESSON_TYPE = {{ lesson.type | tojson }};
+    window.HAS_VERIFIER = {{ (lesson.verify_script is not none) | tojson }};
+    window.HAS_INTERACTIVE = {{ (has_interactive_steps | default(false)) | tojson }};
+    window.REQUIRED_PRIOR = {{ (lesson.required_prior | default([])) | tojson }};
+    {% endif %}
   </script>
   <script src="{{ url_for('static', filename='js/course.js') }}"></script>
   {% block scripts %}{% endblock %}

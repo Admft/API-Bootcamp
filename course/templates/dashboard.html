@@ -4,12 +4,13 @@
 {% block content %}
 <header class="page-header">
   <div>
-    <p class="eyebrow">One-day intensive course</p>
-    <h1>API Integration Bootcamp</h1>
-    <p class="lead">Read API docs → authenticate → call endpoints → transform JSON → sync systems → document it. Built for Sales Engineers who learn by typing.</p>
+    <p class="eyebrow">Samsara Sales Engineer prep</p>
+    <h1>API &amp; Python Bootcamp</h1>
+    <p class="lead">Read API docs → authenticate → call endpoints → transform JSON → sync systems → document and demo it. Progress saves automatically in this browser.</p>
   </div>
   <div class="header-actions">
     <button class="btn btn-secondary" id="btn-check-apis">Check APIs</button>
+    <button class="btn btn-ghost" id="btn-reset-progress" title="Clear saved progress">Reset progress</button>
     <a href="{{ url_for('lesson_page', lesson_id='intro') }}" class="btn btn-primary">Start course →</a>
   </div>
 </header>
@@ -27,21 +28,27 @@
     <span class="stat-value">6</span>
     <span class="stat-label">Scripts you build</span>
   </div>
-  <div class="stat-card">
+  <div class="stat-card progress-stat">
     <span class="stat-value" id="dash-progress">0%</span>
-    <span class="stat-label">Your progress</span>
+    <span class="stat-label" id="dash-progress-count">0 of {{ total_lessons }} lessons complete</span>
   </div>
 </section>
 
 <section class="modules-grid">
   {% for module in modules %}
-  <article class="module-card">
+  {% set lesson_ids = module.lessons | map(attribute='id') | list %}
+  <article class="module-card" data-module-lessons="{{ lesson_ids | join(',') }}" data-mastery-lessons="{{ (module.mastery_lessons or []) | join(',') }}">
     <div class="module-card-header">
       <span class="module-num">{{ loop.index }}</span>
       <div>
         <h2>{{ module.title }}</h2>
         <p>{{ module.subtitle }}</p>
       </div>
+    </div>
+    <div class="module-progress">
+      <div class="module-progress-bar"><div class="module-progress-fill"></div></div>
+      <span class="module-progress-label">0/{{ module.lessons | length }} complete</span>
+      <span class="module-mastery-badge">Mastery</span>
     </div>
     <ul class="module-lessons">
       {% for les in module.lessons %}

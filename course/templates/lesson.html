@@ -14,7 +14,7 @@
     {% if prev_lesson %}
     <a href="{{ url_for('lesson_page', lesson_id=prev_lesson.id) }}" class="btn btn-secondary">← Previous</a>
     {% endif %}
-    <button class="btn btn-success" id="btn-complete" data-lesson-id="{{ lesson.id }}">Mark complete</button>
+    <button class="btn btn-success" id="btn-complete" data-lesson-id="{{ lesson.id }}" aria-pressed="false">Mark complete</button>
     {% if next_lesson %}
     <a href="{{ url_for('lesson_page', lesson_id=next_lesson.id) }}" class="btn btn-primary" id="btn-next">Next →</a>
     {% endif %}
@@ -33,17 +33,18 @@
       <li>Document integrations for fellow Sales Engineers</li>
     </ul>
 
+    <h2>How this course holds your hand</h2>
+    <p>This is a <strong>multi-day mastery path</strong>. Every idea is <strong>read → type → Analyze → next tiny step</strong>. Do not skip <strong>review</strong>, <strong>debug</strong>, or <strong>exam</strong> gates — they lock the skill in before you move on.</p>
+
     <h2>The one pattern that matters</h2>
     <pre><code>GET source API → filter → transform schema → POST destination API</code></pre>
 
-    <h2>Course modules</h2>
-    <p>You'll type six real scripts against local mock APIs — no paid accounts needed. Each lesson has a built-in editor, run button, and verifier.</p>
-
     <h2>Rules</h2>
     <ul>
-      <li><strong>Type it</strong> — build each script step by step in the editor</li>
-      <li><strong>Analyze</strong> — hit ✦ Analyze (or Ctrl+Enter) after each step to check your work</li>
+      <li><strong>Type it</strong> — look at the example, then type it yourself (don't paste whole files)</li>
+      <li><strong>Analyze</strong> — hit ✦ Analyze (or Ctrl+Enter) after each step</li>
       <li><strong>Fix until green</strong> — each step shows ✓ or ✗ with hints</li>
+      <li><strong>Don't skip baby / review / debug / exam lessons</strong> — "put it together" assumes you earned them</li>
     </ul>
 
     <a href="{{ url_for('lesson_page', lesson_id='setup') }}" class="btn btn-primary">Next: Environment Setup →</a>
@@ -54,39 +55,110 @@
 <section class="lesson-body content-only">
   <div class="prose">
     <h2>Terminal 1 — Mock APIs (keep running all day)</h2>
-    <pre><code>cd "c:\Users\amoffat\Documents\Documents\Projects\Learn Python"
-.\venv\Scripts\Activate.ps1
-python mock-apis\run_servers.py</code></pre>
+    <pre><code>cd "/Users/MacBook/Documents/Projects/API-Bootcamp"
+source venv/bin/activate
+python mock-apis/run_servers.py</code></pre>
 
-    <h2>Terminal 2 — Already done if you ran setup</h2>
-    <pre><code>.\setup.ps1
-.\venv\Scripts\Activate.ps1
-python course\app.py</code></pre>
+    <h2>Terminal 2 — Course platform (already running if you see this page)</h2>
+    <pre><code>source venv/bin/activate
+python course/app.py</code></pre>
 
-    <p>The green dot in the sidebar means both mock APIs are online. If it's red, start Terminal 1.</p>
+    <p>Open <strong>http://127.0.0.1:8080</strong>. The green dot in the sidebar means both mock APIs are online. If it's red, start Terminal 1.</p>
 
     <h2>Your workspace</h2>
-    <p>Scripts you type are saved to <code>exercises/my-work/</code> on disk — you can also edit them in VS Code.</p>
+    <p>Scripts you type are saved to <code>exercises/my-work/</code> on disk — you can also edit them in Cursor/VS Code.</p>
 
-    <div class="setup-checklist">
-      <label><input type="checkbox" class="setup-item"> Virtual env created</label>
-      <label><input type="checkbox" class="setup-item"> Mock APIs running (check sidebar status)</label>
-      <label><input type="checkbox" class="setup-item"> .env file exists with API keys</label>
+    <div class="setup-checklist progress-checklist">
+      <p class="checklist-hint">Check each item — this lesson completes automatically when all are done.</p>
+      <label><input type="checkbox" class="setup-item" data-check-id="venv"> Virtual env created</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="apis"> Mock APIs running (check sidebar status)</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="env"> .env file exists with API keys</label>
     </div>
 
-    <a href="{{ url_for('lesson_page', lesson_id='http-basics') }}" class="btn btn-primary">Next: HTTP Basics →</a>
+    <a href="{{ url_for('lesson_page', lesson_id='http-methods') }}" class="btn btn-primary">Next: HTTP Methods →</a>
+  </div>
+</section>
+
+{% elif lesson.type == 'lab' and lesson.id == 'postman-health-lab' %}
+<section class="lesson-body content-only">
+  <div class="prose">
+    <h2>Lab: Health check in Postman</h2>
+    <ol>
+      <li>Open Postman (install if needed)</li>
+      <li>Import <code>postman/mock-apis.postman_collection.json</code> if you have not yet</li>
+      <li>Ensure mock APIs are running (sidebar green dot)</li>
+      <li>Send <strong>GET /health</strong> on the monitoring API (port 5001)</li>
+      <li>Confirm status <strong>200</strong> and that no Authorization header is required</li>
+    </ol>
+
+    <div class="setup-checklist progress-checklist">
+      <p class="checklist-hint">Check each item as you finish — this lesson completes when all are done.</p>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-health-open"> Postman open with collection imported</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-health-send"> Sent GET /health</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-health-200"> Got 200 OK</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-health-noauth"> Confirmed no auth was needed</label>
+    </div>
+
+    <a href="{{ url_for('lesson_page', lesson_id='postman-get-lab') }}" class="btn btn-primary">Next: List incidents →</a>
+  </div>
+</section>
+
+{% elif lesson.type == 'lab' and lesson.id == 'postman-get-lab' %}
+<section class="lesson-body content-only">
+  <div class="prose">
+    <h2>Lab: List incidents in Postman</h2>
+    <ol>
+      <li>Open the <strong>List open incidents</strong> request in the collection</li>
+      <li>Set Authorization to Bearer Token using your <code>SOURCE_API_KEY</code> from <code>.env</code></li>
+      <li>Confirm query param <code>status=open</code> (or add it)</li>
+      <li>Send the request — expect <strong>200</strong> and a JSON list under <code>data</code></li>
+    </ol>
+
+    <div class="setup-checklist progress-checklist">
+      <p class="checklist-hint">Check each item as you finish — this lesson completes when all are done.</p>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-get-bearer"> Bearer token set from SOURCE_API_KEY</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-get-status"> status=open query param present</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-get-200"> Got 200 with a data array</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-get-read"> Read at least one incident id in the response</label>
+    </div>
+
+    <a href="{{ url_for('lesson_page', lesson_id='postman-post-lab') }}" class="btn btn-primary">Next: Create ticket →</a>
+  </div>
+</section>
+
+{% elif lesson.type == 'lab' and lesson.id == 'postman-post-lab' %}
+<section class="lesson-body content-only">
+  <div class="prose">
+    <h2>Lab: Create ticket + 409</h2>
+    <ol>
+      <li>Open the <strong>Create ticket</strong> request (destination API, port 5002)</li>
+      <li>Set Bearer auth with <code>DESTINATION_API_KEY</code></li>
+      <li>POST a JSON body with <code>external_id</code>, <code>site</code>, <code>description</code>, <code>priority</code></li>
+      <li>Expect <strong>201</strong> on first create</li>
+      <li>Send the same body again — expect <strong>409 Conflict</strong></li>
+    </ol>
+
+    <div class="setup-checklist progress-checklist">
+      <p class="checklist-hint">Check each item as you finish — this lesson completes when all are done.</p>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-post-auth"> Destination Bearer token set</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-post-body"> JSON body has external_id / site / description / priority</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-post-201"> First POST returned 201</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="pm-post-409"> Duplicate POST returned 409</label>
+    </div>
+
+    <a href="{{ url_for('lesson_page', lesson_id='postman-lab') }}" class="btn btn-primary">Next: Full checklist →</a>
   </div>
 </section>
 
 {% elif lesson.type == 'lab' and lesson.id == 'postman-lab' %}
 <section class="lesson-body content-only">
   <div class="prose">
-    <h2>Postman Lab</h2>
+    <h2>Lab: Full Postman checklist</h2>
     <ol>
       <li>Download <a href="https://www.postman.com/downloads/" target="_blank">Postman</a></li>
       <li>Import <code>postman/mock-apis.postman_collection.json</code></li>
       <li>Ensure mock APIs are running (sidebar green dot)</li>
-      <li>Work through all 8 requests in order</li>
+      <li>Work through all collection requests in order</li>
     </ol>
 
     <h2>What to notice</h2>
@@ -99,8 +171,18 @@ python course\app.py</code></pre>
       <tr><td>Duplicate ticket</td><td>409 Conflict response</td></tr>
     </table>
 
-    <p>After Postman works, recreate request #2 in Python (next modules).</p>
-    <a href="{{ url_for('lesson_page', lesson_id='python-syntax') }}" class="btn btn-primary">Next: Python Syntax →</a>
+    <div class="setup-checklist progress-checklist">
+      <p class="checklist-hint">Check each item as you finish — this lesson completes when all are done.</p>
+      <label><input type="checkbox" class="setup-item" data-check-id="install"> Postman installed</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="import"> Collection imported</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="health"> Health check returned 200</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="list"> Listed open incidents with Bearer auth</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="create"> Created a ticket with POST</label>
+      <label><input type="checkbox" class="setup-item" data-check-id="dup"> Saw a 409 on duplicate create</label>
+    </div>
+
+    <p>After Postman works, start Python building blocks next.</p>
+    <a href="{{ url_for('lesson_page', lesson_id='py-read-vars') }}" class="btn btn-primary">Next: Read Variables →</a>
   </div>
 </section>
 
@@ -144,8 +226,8 @@ python course\app.py</code></pre>
 <section class="lesson-body interactive-layout">
   <div class="lesson-panel steps-panel" id="steps-panel">
     <div class="steps-panel-header">
-      <h2>Choose an exercise</h2>
-      <p>Same skill, different scenario. Complete A → B → C for full practice.</p>
+      <h2>Type-along steps</h2>
+      <p>See the example → type it yourself → Analyze → next step. Tiny steps on purpose.</p>
     </div>
     <div class="exercise-picker" id="exercise-picker"></div>
     <div class="exercise-scenario" id="exercise-scenario"></div>
@@ -192,9 +274,6 @@ python course\app.py</code></pre>
 {% if workspace_file is defined and workspace_file %}
 <script>
   window.WORKSPACE_FILE = {{ workspace_file | tojson }};
-  window.LESSON_ID = {{ lesson.id | tojson }};
-  window.HAS_VERIFIER = {{ (lesson.verify_script is not none) | tojson }};
-  window.HAS_INTERACTIVE = {{ (has_interactive_steps | default(false)) | tojson }};
 </script>
 {% endif %}
 {% endblock %}

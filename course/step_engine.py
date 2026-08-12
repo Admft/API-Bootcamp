@@ -18,14 +18,24 @@ def get_steps(lesson_id, exercise_id=None):
 
 
 def get_steps_for_exercise(lesson_id, exercise_id=None):
+    from step_teaching import enrich_steps
+
+    raw = []
+    steps_key = lesson_id
     if exercise_id:
         ex = get_exercise(lesson_id, exercise_id)
         if ex:
-            return LESSON_STEPS.get(ex["steps_key"], [])
-    default = default_exercise(lesson_id)
-    if default:
-        return LESSON_STEPS.get(default["steps_key"], [])
-    return LESSON_STEPS.get(lesson_id, [])
+            steps_key = ex["steps_key"]
+            raw = LESSON_STEPS.get(steps_key, [])
+    if not raw:
+        default = default_exercise(lesson_id)
+        if default:
+            steps_key = default["steps_key"]
+            raw = LESSON_STEPS.get(steps_key, [])
+        else:
+            steps_key = lesson_id
+            raw = LESSON_STEPS.get(lesson_id, [])
+    return enrich_steps(raw, steps_key)
 
 
 def _contains(code, value, case_insensitive=False):
